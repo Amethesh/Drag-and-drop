@@ -54,6 +54,32 @@ export default function Home() {
 
       return setStores(reOrderedStore);
     }
+
+    const storeSourceIndex = stores.findIndex((store) => store.id === source.droppableId);
+    const storeDestinationIndex = stores.findIndex((store) => store.id === destination.droppableId);
+
+    const newSourceItems = [...stores[storeSourceIndex].items];
+    const newDestinationItems =
+      source.droppableId != destination.droppableId
+        ? [...stores[storeDestinationIndex].items]
+        : newSourceItems;
+
+    const [deletedItems] = newSourceItems.splice(source.index, 1);
+    newDestinationItems.splice(destination.index, 0, deletedItems);
+
+    const newStores = [...stores];
+
+    newStores[storeSourceIndex] = {
+      ...stores[storeSourceIndex],
+      items: newSourceItems
+    };
+
+    newStores[storeDestinationIndex] = {
+      ...stores[storeDestinationIndex],
+      items: newDestinationItems
+    };
+
+    setStores(newStores);
   };
 
   return (
@@ -61,7 +87,7 @@ export default function Home() {
       <div className="flex place-items-center before:absolute before:h-[800px] before:w-full sm:before:w-[480px] before:-translate-x-1/2 before:rounded-full before:bg-gradient-radial before:from-white before:to-transparent before:blur-2xl before:content-[''] after:absolute after:-z-20 after:h-[300px] after:w-full sm:after:w-[300px] after:translate-x-1/3 after:bg-gradient-conic after:from-sky-200 after:via-blue-200 after:blur-2xl after:content-[''] before:dark:bg-gradient-to-br before:dark:from-transparent before:dark:to-blue-700 before:dark:opacity-10 after:dark:from-sky-900 after:dark:via-[#0141ff] after:dark:opacity-40 before:lg:h-[360px] z-[-1]">
         <h1 className="text-2xl font-bold pb-6">Drag and Drop test</h1>
       </div>
-      <section className="flex flex-col items-center w-[400px] h-[500px] border rounded-lg p-2">
+      <section className="flex flex-col items-center w-[400px] h-max border rounded-lg p-2">
         <DragDropContext onDragEnd={handleDragDrop}>
           <div className="w-full m-2 h-max text-center backdrop-blur-lg rounded-lg">
             <h1 className="text-2xl font-semibold text-emerald-600 ">Shopping List</h1>
@@ -77,13 +103,38 @@ export default function Home() {
                         {...provided.dragHandleProps}
                         {...provided.draggableProps}
                         ref={provided.innerRef}
-                        className="bg-emerald-400/30 w-full mb-4 p-2 h-max text-center backdrop-blur-lg rounded-sm"
+                        className=" text-center mb-2"
                       >
-                        <h1 className="text-xl font-light text-white">{store.name}</h1>
+                        <Droppable droppableId={store.id}>
+                          {(provided) => (
+                            <div {...provided.droppableProps} ref={provided.innerRef}>
+                              <h1 className="text-xl font-light text-white bg-emerald-400/30 w-full mb-2 p-2 h-max text-center backdrop-blur-lg rounded-sm">
+                                {store.name}
+                              </h1>
+                              {store.items.map((item, index) => (
+                                <Draggable draggableId={item.id} key={item.id} index={index}>
+                                  {(provided) => (
+                                    <h2
+                                      {...provided.draggableProps}
+                                      {...provided.dragHandleProps}
+                                      ref={provided.innerRef}
+                                      className="text-lg w-full bg-emerald-200/50 backdrop-blur-lg mb-2 p-1.5"
+                                      key={item.id}
+                                    >
+                                      {item.name}
+                                    </h2>
+                                  )}
+                                </Draggable>
+                              ))}
+                              {provided.placeholder}
+                            </div>
+                          )}
+                        </Droppable>
                       </div>
                     )}
                   </Draggable>
                 ))}
+                {provided.placeholder}
               </main>
             )}
           </Droppable>
